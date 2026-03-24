@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AG Pipeline</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{--bg:#F6F5F2;--sur:#FFF;--bd:#E4E2DB;--bdm:#CCCAB9;--tx:#18170F;--tx2:#6B6952;--tx3:#AEAB9A;--g:#276740;--gbg:#EBF5EE;--gbd:#B4D9BF;--am:#7A5210;--ambg:#FDF3DC;--ambd:#EDD58A;--r:#A13228;--rbg:#FDECEA;--rbd:#F0B4AE;--b:#1A4F8A;--bbg:#EAF1FB;--bbd:#A8C8F0;--rad:10px;--rads:6px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;font-size:14px;line-height:1.5}
+/* AUTH */
+#auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center}
+.acard{background:var(--sur);border:1px solid var(--bd);border-radius:16px;padding:44px 48px;text-align:center;width:360px;max-width:calc(100vw - 32px)}
+.amark{width:40px;height:40px;background:var(--tx);border-radius:9px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center}
+.amark svg{width:20px;height:20px;fill:white}
+.atitle{font-size:19px;font-weight:600;margin-bottom:6px;letter-spacing:-.3px}
+.asub{font-size:13px;color:var(--tx2);margin-bottom:28px;line-height:1.6}
+#gsignin{display:flex;justify-content:center}
+.anote{font-size:11px;color:var(--tx3);margin-top:16px}
+/* SHELL */
+#app{display:none;min-height:100vh;flex-direction:column}
+.topbar{background:var(--sur);border-bottom:1px solid var(--bd);height:52px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.tl{display:flex;align-items:center;gap:12px}
+.brand{font-size:15px;font-weight:600;letter-spacing:-.4px}
+.rbadge{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:500}
+.ra{background:var(--gbg);color:var(--g);border:1px solid var(--gbd)}
+.rtl{background:var(--ambg);color:var(--am);border:1px solid var(--ambd)}
+.radm{background:var(--bbg);color:var(--b);border:1px solid var(--bbd)}
+.tr{display:flex;align-items:center;gap:10px}
+.uchip{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--tx2)}
+.av{width:28px;height:28px;border-radius:50%;background:var(--bd);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;overflow:hidden;flex-shrink:0}
+.av img{width:100%;height:100%;object-fit:cover}
+.bout{font-size:12px;color:var(--tx3);background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:var(--rads);font-family:inherit}
+.bout:hover{background:var(--bg);color:var(--tx2)}
+/* TABS */
+.tabbar{background:var(--sur);border-bottom:1px solid var(--bd);padding:0 24px;display:flex}
+.tab{padding:11px 16px;font-size:13px;font-weight:500;color:var(--tx3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;margin-bottom:-1px;font-family:inherit;transition:color .15s}
+.tab:hover{color:var(--tx2)}
+.tab.active{color:var(--tx);border-bottom-color:var(--tx)}
+/* MAIN */
+.main{padding:24px;max-width:1060px;margin:0 auto;width:100%}
+.panel{display:none}.panel.active{display:block}
+/* OFFER BAR */
+.obar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.olabel{font-size:12px;color:var(--tx2);font-weight:500;white-space:nowrap}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid var(--bdm);background:var(--sur);color:var(--tx2);cursor:pointer;transition:all .15s;font-family:inherit}
+.chip:hover{border-color:var(--tx);color:var(--tx)}
+.chip.on{background:var(--tx);color:#fff;border-color:var(--tx)}
+.chip.none.on{background:var(--bg);color:var(--tx2);border-color:var(--bdm)}
+/* SECTION HDR */
+.shdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.stitle{font-size:11px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.05em}
+.nbadge{font-size:11px;padding:2px 7px;border-radius:20px;background:var(--bg);color:var(--tx2);border:1px solid var(--bd);font-family:'DM Mono',monospace}
+/* ADD FORM */
+.addform{background:var(--bg);border:1px dashed var(--bdm);border-radius:var(--rad);padding:16px;margin-bottom:20px}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px}
+.fg2{display:grid;grid-template-columns:1fr auto;gap:10px}
+.ff{display:flex;flex-direction:column;gap:4px}
+.ff label{font-size:11px;font-weight:500;color:var(--tx2)}
+.ff input,.ff select,.ff textarea{padding:8px 10px;border:1px solid var(--bdm);border-radius:var(--rads);font-size:13px;font-family:inherit;background:var(--sur);color:var(--tx);outline:none;transition:border-color .15s;width:100%}
+.ff input:focus,.ff select:focus,.ff textarea:focus{border-color:var(--tx)}
+.ff textarea{resize:vertical;min-height:58px}
+.bprimary{padding:8px 20px;background:var(--tx);color:white;border:none;border-radius:var(--rads);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:opacity .15s;white-space:nowrap;align-self:flex-end}
+.bprimary:hover{opacity:.82}
+.bprimary:disabled{opacity:.35;cursor:not-allowed}
+/* LEADS */
+.llist{display:flex;flex-direction:column;gap:7px}
+.lrow{background:var(--sur);border:1px solid var(--bd);border-radius:var(--rad);padding:12px 16px;display:grid;grid-template-columns:18px 1fr auto;gap:12px;align-items:flex-start;transition:border-color .15s}
+.lrow.match{border-color:var(--gbd);background:var(--gbg)}
+.lrow.stale{border-left:3px solid var(--am)}
+.lrank{font-size:11px;color:var(--tx3);font-family:'DM Mono',monospace;padding-top:2px}
+.lbody{display:flex;flex-direction:column;gap:5px}
+.ltop{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lname{font-size:14px;font-weight:600}
+.lcid{font-size:11px;color:var(--tx3);font-family:'DM Mono',monospace}
+.pill{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;white-space:nowrap}
+.po{background:var(--bbg);color:var(--b);border:1px solid var(--bbd)}
+.pm{background:var(--gbg);color:var(--g);border:1px solid var(--gbd)}
+.ps{background:var(--ambg);color:var(--am);border:1px solid var(--ambd)}
+.lnote{font-size:12px;color:var(--tx2);font-style:italic}
+.lmeta{font-size:11px;color:var(--tx3)}
+.lacts{display:flex;gap:6px;align-items:flex-start;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+.bsm{font-size:11px;padding:5px 10px;border:1px solid var(--bdm);border-radius:var(--rads);cursor:pointer;background:var(--sur);color:var(--tx2);font-family:inherit;transition:all .15s;white-space:nowrap}
+.bsm:hover{border-color:var(--tx);color:var(--tx)}
+.bconv{border-color:var(--gbd);color:var(--g);background:var(--gbg)}
+.bconv:hover{background:var(--g);color:white;border-color:var(--g)}
+.bni{border-color:var(--rbd);color:var(--r);background:var(--rbg)}
+.bni:hover{background:var(--r);color:white;border-color:var(--r)}
+.noteta{width:100%;padding:6px 8px;border:1px solid var(--bdm);border-radius:var(--rads);font-size:12px;font-family:inherit;margin-top:4px;background:var(--sur);color:var(--tx);outline:none;resize:vertical;min-height:48px}
+.noteta:focus{border-color:var(--tx)}
+/* EMPTY */
+.empty{text-align:center;padding:48px 24px;color:var(--tx3)}
+.eicon{font-size:28px;margin-bottom:10px}
+.etitle{font-size:14px;font-weight:500;color:var(--tx2);margin-bottom:4px}
+.esub{font-size:12px}
+/* STATS */
+.trow{display:flex;gap:0;margin-bottom:20px;border:1px solid var(--bdm);border-radius:var(--rads);overflow:hidden;width:fit-content}
+.tbtn{padding:6px 16px;font-size:12px;font-weight:500;background:var(--sur);color:var(--tx2);border:none;cursor:pointer;font-family:inherit;transition:all .15s}
+.tbtn.on{background:var(--tx);color:white}
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px}
+.scard{background:var(--sur);border:1px solid var(--bd);border-radius:var(--rad);padding:14px 16px}
+.slabel{font-size:11px;color:var(--tx3);font-weight:500;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.sval{font-size:24px;font-weight:600;letter-spacing:-.5px;font-family:'DM Mono',monospace}
+.sval.gv{color:var(--g)}.sval.av{color:var(--am)}.sval.rv{color:var(--r)}
+.stable{width:100%;border-collapse:collapse;font-size:13px}
+.stable th{background:var(--bg);color:var(--tx2);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.04em;padding:8px 12px;border:1px solid var(--bd);text-align:left}
+.stable td{padding:8px 12px;border:1px solid var(--bd);vertical-align:middle}
+.stable tr:hover td{background:var(--bg)}
+.pbar{height:4px;background:var(--bd);border-radius:2px;margin-top:4px;overflow:hidden}
+.pfill{height:100%;background:var(--g);border-radius:2px}
+/* MANAGER */
+.mfilt{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:flex-end}
+.mfilt .ff{min-width:130px}
+.aovwrap{display:flex;align-items:center;gap:6px}
+.aovpfx{font-size:13px;color:var(--tx2);font-weight:500}
+.ptable{width:100%;border-collapse:collapse;font-size:13px}
+.ptable th{background:var(--bg);color:var(--tx2);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.04em;padding:9px 14px;border:1px solid var(--bd);text-align:left;white-space:nowrap}
+.ptable td{padding:9px 14px;border:1px solid var(--bd);vertical-align:middle}
+.ptable .tlrow td{background:var(--bg);font-weight:600}
+.ptable .agrow td{background:var(--sur)}
+.ptable .agrow td:first-child{padding-left:28px;color:var(--tx2)}
+.ptable .totrow td{background:var(--tx);color:white;font-weight:600}
+.ptable .agrow:hover td{background:#FAFAF7}
+.vmono{font-family:'DM Mono',monospace}
+.sflag{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--am);margin-left:6px;vertical-align:middle}
+.nodata{text-align:center;padding:40px;color:var(--tx3);font-size:13px}
+/* UTIL */
+.loading{text-align:center;padding:40px;color:var(--tx3);font-size:13px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--bdm);border-top-color:var(--tx2);border-radius:50%;animation:sp .7s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes sp{to{transform:rotate(360deg)}}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--tx);color:white;padding:10px 20px;border-radius:var(--rad);font-size:13px;opacity:0;transition:all .2s;z-index:999;pointer-events:none;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:640px){.fg3{grid-template-columns:1fr 1fr}.sgrid{grid-template-columns:1fr 1fr}.main{padding:16px}.acard{padding:32px 24px}}
+</style>
+</head>
+<body>
+
+<div id="auth-screen">
+  <div class="acard">
+    <div class="amark"><svg viewBox="0 0 20 20"><path d="M10 2L3 7v11h5v-5h4v5h5V7z"/></svg></div>
+    <div class="atitle">AG Pipeline</div>
+    <div class="asub">Sign in with your Curefit or Cultfit Google account to continue.</div>
+    <div id="gsignin"></div>
+    <div class="anote">Access is limited to registered team members only.</div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div class="tl">
+      <span class="brand">AG Pipeline</span>
+      <span class="rbadge" id="rbadge"></span>
+    </div>
+    <div class="tr">
+      <div class="uchip">
+        <div class="av" id="uav"></div>
+        <span id="uname"></span>
+      </div>
+      <button class="bout" onclick="signOut()">Sign out</button>
+    </div>
+  </div>
+
+  <!-- AGENT VIEW -->
+  <div id="vagent" style="display:none">
+    <div class="tabbar">
+      <button class="tab active" onclick="atab('pipeline',this)">My pipeline</button>
+      <button class="tab" onclick="atab('stats',this)">My stats</button>
+    </div>
+    <div class="main">
+      <div id="ap-pipeline" class="panel active">
+        <div class="obar">
+          <span class="olabel">Today's offer:</span>
+          <div class="chips" id="ochips"></div>
+        </div>
+        <div class="shdr"><span class="stitle">Add a hot lead</span></div>
+        <div class="addform">
+          <div class="fg3">
+            <div class="ff"><label>Case ID</label><input id="f-cid" placeholder="e.g. CS-10482"/></div>
+            <div class="ff"><label>Customer name</label><input id="f-nm" placeholder="Full name"/></div>
+            <div class="ff"><label>Offer interest</label>
+              <select id="f-off">
+                <option value="">Select offer</option>
+                <option>Amazon Voucher</option><option>Extension</option>
+                <option>Cultsport Freebie</option><option>Voucher+Extension</option>
+                <option>Salary Day</option>
+              </select>
+            </div>
+          </div>
+          <div class="fg2">
+            <div class="ff"><label>Notes (objection, best time to call)</label><textarea id="f-notes" placeholder="e.g. Will think about it, call after 6pm"></textarea></div>
+            <button class="bprimary" onclick="addLead()">Add lead</button>
+          </div>
+        </div>
+        <div class="shdr">
+          <span class="stitle">Open leads</span>
+          <span class="nbadge" id="opencnt">0</span>
+        </div>
+        <div id="llist" class="llist"></div>
+      </div>
+
+      <div id="ap-stats" class="panel">
+        <div class="trow">
+          <button class="tbtn on" onclick="stoggle('month',this)">This month</button>
+          <button class="tbtn" onclick="stoggle('all',this)">All time</button>
+        </div>
+        <div class="sgrid" id="scards"></div>
+        <div class="shdr"><span class="stitle">Breakdown by offer type</span></div>
+        <div id="sbreakdown"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANAGER / TL VIEW -->
+  <div id="vmgr" style="display:none">
+    <div class="tabbar">
+      <button class="tab active" onclick="mtab('pipeline',this)">Team pipeline</button>
+      <button class="tab" onclick="mtab('leads',this)">All leads</button>
+    </div>
+    <div class="main">
+      <div id="mp-pipeline" class="panel active">
+        <div class="mfilt">
+          <div class="ff"><label>Offer type</label>
+            <select id="m-off" onchange="renderMgr()">
+              <option value="all">All offers</option>
+              <option>Amazon Voucher</option><option>Extension</option>
+              <option>Cultsport Freebie</option><option>Voucher+Extension</option>
+              <option>Salary Day</option>
+            </select>
+          </div>
+          <div class="ff"><label>From</label><input type="date" id="m-from" onchange="renderMgr()"/></div>
+          <div class="ff"><label>To</label><input type="date" id="m-to" onchange="renderMgr()"/></div>
+          <div class="ff"><label>AOV (₹)</label>
+            <div class="aovwrap">
+              <span class="aovpfx">₹</span>
+              <input type="number" id="m-aov" value="14750" min="1000" max="99999" style="width:100px" onchange="renderMgr()"/>
+            </div>
+          </div>
+        </div>
+        <div id="mgrtable"></div>
+      </div>
+
+      <div id="mp-leads" class="panel">
+        <div class="mfilt">
+          <div class="ff"><label>Agent</label>
+            <select id="ml-agent" onchange="renderAllLeads()"><option value="all">All agents</option></select>
+          </div>
+          <div class="ff"><label>Status</label>
+            <select id="ml-status" onchange="renderAllLeads()">
+              <option value="all">All</option><option>Open</option>
+              <option>Converted</option><option>Not Interested</option>
+            </select>
+          </div>
+          <div class="ff"><label>Offer</label>
+            <select id="ml-offer" onchange="renderAllLeads()">
+              <option value="all">All offers</option>
+              <option>Amazon Voucher</option><option>Extension</option>
+              <option>Cultsport Freebie</option><option>Voucher+Extension</option>
+              <option>Salary Day</option>
+            </select>
+          </div>
+        </div>
+        <div id="alltable"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONFIG — fill these in during setup (see setup guide)
+// ═══════════════════════════════════════════════════════════
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzF7KChw94n1gjM3QDy5qAGkT7EZp5NmLnrnzMRTOSCoyElCshPuPBjE1S8otn29lmCFA/exec';
+const GOOGLE_CLIENT_ID = '895519620557-0ckqgpun0r774rbbe7uhla0q9jhu7hkc.apps.googleusercontent.com';
+
+// ═══════════════════════════════════════════════════════════
+const OFFERS = ['Amazon Voucher','Extension','Cultsport Freebie','Voucher+Extension','Salary Day'];
+const MATCH_MAP = {
+  'Amazon Voucher':['Amazon Voucher','Voucher+Extension'],
+  'Extension':['Extension','Voucher+Extension'],
+  'Cultsport Freebie':['Cultsport Freebie'],
+  'Voucher+Extension':['Amazon Voucher','Extension','Voucher+Extension'],
+  'Salary Day':['Salary Day'],
+};
+
+let CU = null; // current user
+let leads = [];
+let agents = [];
+let todayOffer = null;
+let statsMode = 'month';
+
+// ── AUTH ──────────────────────────────────────────────────
+window.onload = () => {
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleCred,
+    auto_select: false,
+  });
+  google.accounts.id.renderButton(document.getElementById('gsignin'),{
+    theme:'outline',size:'large',text:'signin_with_google',shape:'rectangular',width:260
+  });
+};
+
+async function handleCred(resp) {
+  const p = parseJwt(resp.credential);
+  if (!p.email.endsWith('@cultfit.com') && !p.email.endsWith('@curefit.com')) {
+    alert('Access restricted to Curefit/Cultfit accounts only.'); return;
+  }
+  document.getElementById('auth-screen').innerHTML = '<div class="loading"><span class="spin"></span>Signing in...</div>';
+  try {
+    const res = await api('getAgent', {email: p.email});
+    if (!res) {
+      alert('Could not connect to backend. Check SCRIPT_URL in setup.');
+      location.reload(); return;
+    }
+    if (res.error) {
+      alert('Your account is not registered. Ask your TL to add you to the Agents sheet.');
+      location.reload(); return;
+    }
+    CU = {email:p.email, name:p.name, picture:p.picture,
+          role:res.role, agentName:res.agentName,
+          tlEmail:res.tlEmail, tlName:res.tlName};
+    initApp();
+  } catch(e) {
+    console.error(e);
+    alert('Could not connect to backend. Check SCRIPT_URL in setup.');
+    location.reload();
+  }
+}
+
+function parseJwt(t) {
+  const b = t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+  return JSON.parse(decodeURIComponent(atob(b).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+}
+
+// ── INIT ──────────────────────────────────────────────────
+async function initApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('app').style.flexDirection = 'column';
+
+  const av = document.getElementById('uav');
+  if (CU.picture) av.innerHTML = `<img src="${CU.picture}">`;
+  else av.textContent = initials(CU.name);
+  document.getElementById('uname').textContent = CU.agentName || CU.name;
+
+  const rb = document.getElementById('rbadge');
+  const roleMap = {admin:['Admin','radm'], tl:['Team Lead','rtl'], agent:['Agent','ra']};
+  const [label, cls] = roleMap[CU.role] || ['Agent','ra'];
+  rb.textContent = label; rb.className = 'rbadge ' + cls;
+
+  if (CU.role === 'agent') {
+    document.getElementById('vagent').style.display = 'block';
+    buildOfferChips();
+    await loadAgentLeads();
+  } else {
+    document.getElementById('vmgr').style.display = 'block';
+    await loadAllData();
+    const today = new Date(), week = new Date();
+    week.setDate(week.getDate()-6);
+    document.getElementById('m-from').value = fd(week);
+    document.getElementById('m-to').value = fd(today);
+    renderMgr();
+    populateAgentDrop();
+    renderAllLeads();
+  }
+}
+
+// ── OFFER CHIPS ───────────────────────────────────────────
+function buildOfferChips() {
+  document.getElementById('ochips').innerHTML =
+    `<button class="chip none on" onclick="setOffer(null,this)">No offer today</button>` +
+    OFFERS.map(o=>`<button class="chip" onclick="setOffer('${o}',this)">${o}</button>`).join('');
+}
+function setOffer(offer, el) {
+  todayOffer = offer;
+  document.querySelectorAll('#ochips .chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  renderLeads();
+}
+
+// ── AGENT LEADS ───────────────────────────────────────────
+async function loadAgentLeads() {
+  document.getElementById('llist').innerHTML = `<div class="loading"><span class="spin"></span>Loading your pipeline...</div>`;
+  const res = await api('getLeads', {email: CU.email});
+  leads = res.leads || [];
+  renderLeads();
+  renderStats();
+}
+
+function renderLeads() {
+  const open = leads.filter(l=>l.status==='Open');
+  document.getElementById('opencnt').textContent = open.length;
+  if (!open.length) {
+    document.getElementById('llist').innerHTML = `<div class="empty"><div class="eicon">📋</div><div class="etitle">No open leads yet</div><div class="esub">Add a hot lead above to get started</div></div>`;
+    return;
+  }
+  const matches = todayOffer ? MATCH_MAP[todayOffer] : [];
+  const hit = open.filter(l=>matches.includes(l.offerInterest)).sort((a,b)=>new Date(a.dateAdded)-new Date(b.dateAdded));
+  const rest = open.filter(l=>!matches.includes(l.offerInterest)).sort((a,b)=>new Date(a.dateAdded)-new Date(b.dateAdded));
+  const sorted = [...hit, ...rest];
+  const today = new Date();
+  document.getElementById('llist').innerHTML = sorted.map((l,i)=>{
+    const dp = Math.floor((today-new Date(l.dateAdded))/86400000);
+    const isMatch = matches.includes(l.offerInterest);
+    const isStale = dp>=7;
+    const lastC = l.lastContacted ? `Last called ${l.lastContacted}` : `Added ${l.dateAdded}`;
+    return `<div class="lrow${isMatch?' match':''}${isStale?' stale':''}" id="lr-${l.id}">
+      <span class="lrank">${i+1}</span>
+      <div class="lbody">
+        <div class="ltop">
+          <span class="lname">${esc(l.customerName)}</span>
+          <span class="lcid">${esc(l.caseId)}</span>
+          <span class="pill ${isMatch?'pm':'po'}">${esc(l.offerInterest)}</span>
+          ${isStale?`<span class="pill ps">${dp}d parked</span>`:''}
+        </div>
+        ${l.notes?`<div class="lnote">${esc(l.notes)}</div>`:''}
+        <div class="lmeta">${lastC}</div>
+        <textarea class="noteta" id="nt-${l.id}" style="display:none">${esc(l.notes||'')}</textarea>
+      </div>
+      <div class="lacts">
+        <button class="bsm" onclick="toggleNote('${l.id}')">Edit note</button>
+        <button class="bsm" onclick="markCalled('${l.id}')">Called today</button>
+        <button class="bsm bconv" onclick="closeLead('${l.id}','Converted')">Converted</button>
+        <button class="bsm bni" onclick="closeLead('${l.id}','Not Interested')">Not interested</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleNote(id) {
+  const ta = document.getElementById(`nt-${id}`);
+  if (ta.style.display==='none') {
+    ta.style.display='block'; ta.focus();
+    ta.onblur = () => saveNote(id, ta.value);
+  } else { ta.style.display='none'; }
+}
+async function saveNote(id, val) {
+  const l = leads.find(x=>x.id===id);
+  if (!l || l.notes===val) return;
+  l.notes=val;
+  await api('updateLead',{id, notes:val, email:CU.email});
+  toast('Note saved'); renderLeads();
+}
+async function markCalled(id) {
+  const t = fd(new Date());
+  const l = leads.find(x=>x.id===id);
+  if (!l) return;
+  l.lastContacted=t;
+  await api('updateLead',{id, lastContacted:t, email:CU.email});
+  toast('Marked as called today'); renderLeads();
+}
+async function closeLead(id, status) {
+  if (!confirm(`Mark this lead as "${status}"?`)) return;
+  const l = leads.find(x=>x.id===id);
+  if (!l) return;
+  l.status=status; l.closedDate=fd(new Date());
+  await api('updateLead',{id, status, closedDate:l.closedDate, email:CU.email});
+  toast(`Lead marked as ${status}`); renderLeads(); renderStats();
+}
+async function addLead() {
+  const cid=document.getElementById('f-cid').value.trim();
+  const nm=document.getElementById('f-nm').value.trim();
+  const off=document.getElementById('f-off').value;
+  const notes=document.getElementById('f-notes').value.trim();
+  if (!cid||!nm||!off){toast('Fill in Case ID, name and offer');return;}
+  const btn=document.querySelector('.bprimary');
+  btn.disabled=true; btn.textContent='Saving...';
+  const lead={id:'L'+Date.now(), caseId:cid, customerName:nm, offerInterest:off, notes,
+    agentEmail:CU.email, agentName:CU.agentName, tlEmail:CU.tlEmail, tlName:CU.tlName,
+    dateAdded:fd(new Date()), lastContacted:'', status:'Open', closedDate:''};
+  await api('addLead',{lead});
+  leads.push(lead);
+  ['f-cid','f-nm','f-off','f-notes'].forEach(id=>document.getElementById(id).value='');
+  btn.disabled=false; btn.textContent='Add lead';
+  toast('Lead added'); renderLeads(); renderStats();
+}
+
+// ── STATS ─────────────────────────────────────────────────
+function stoggle(mode, el) {
+  statsMode=mode;
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  renderStats();
+}
+function renderStats() {
+  const now=new Date(), ms=new Date(now.getFullYear(),now.getMonth(),1);
+  const data = statsMode==='month' ? leads.filter(l=>new Date(l.dateAdded)>=ms) : leads;
+  const open=data.filter(l=>l.status==='Open').length;
+  const conv=data.filter(l=>l.status==='Converted').length;
+  const ni=data.filter(l=>l.status==='Not Interested').length;
+  const tot=data.length;
+  const pct=tot>0?Math.round(conv/tot*100):0;
+  document.getElementById('scards').innerHTML=`
+    <div class="scard"><div class="slabel">Open</div><div class="sval av">${open}</div></div>
+    <div class="scard"><div class="slabel">Converted</div><div class="sval gv">${conv}</div></div>
+    <div class="scard"><div class="slabel">Not interested</div><div class="sval rv">${ni}</div></div>
+    <div class="scard"><div class="slabel">Conversion %</div><div class="sval">${pct}%</div></div>`;
+  const rows=OFFERS.map(o=>{
+    const ol=data.filter(l=>l.offerInterest===o);
+    const oc=ol.filter(l=>l.status==='Open').length;
+    const cv=ol.filter(l=>l.status==='Converted').length;
+    const ni=ol.filter(l=>l.status==='Not Interested').length;
+    const t=ol.length, p=t>0?Math.round(cv/t*100):0;
+    return `<tr><td>${o}</td><td class="vmono">${oc}</td><td class="vmono" style="color:var(--g)">${cv}</td><td class="vmono" style="color:var(--r)">${ni}</td>
+      <td><div class="vmono">${p}%</div><div class="pbar"><div class="pfill" style="width:${p}%"></div></div></td></tr>`;
+  }).join('');
+  document.getElementById('sbreakdown').innerHTML=`
+    <table class="stable">
+      <thead><tr><th>Offer type</th><th>Open</th><th>Converted</th><th>Not interested</th><th>Conv %</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ── MANAGER ───────────────────────────────────────────────
+async function loadAllData() {
+  document.getElementById('mgrtable').innerHTML=`<div class="loading"><span class="spin"></span>Loading team data...</div>`;
+  const res=await api('getAllData',{role:CU.role, email:CU.email});
+  leads=res.leads||[]; agents=res.agents||[];
+}
+function renderMgr() {
+  const offF=document.getElementById('m-off').value;
+  const from=document.getElementById('m-from').value;
+  const to=document.getElementById('m-to').value;
+  const aov=parseInt(document.getElementById('m-aov').value)||14750;
+  let data=leads.filter(l=>l.status==='Open');
+  if(offF!=='all') data=data.filter(l=>l.offerInterest===offF);
+  if(from) data=data.filter(l=>l.dateAdded>=from);
+  if(to) data=data.filter(l=>l.dateAdded<=to);
+  const tls={};
+  data.forEach(l=>{
+    const tl=l.tlName||'Unassigned', ag=l.agentName||l.agentEmail;
+    if(!tls[tl]) tls[tl]={agents:{}};
+    if(!tls[tl].agents[ag]) tls[tl].agents[ag]={count:0,stale:0};
+    tls[tl].agents[ag].count++;
+    if(Math.floor((new Date()-new Date(l.dateAdded))/86400000)>=7) tls[tl].agents[ag].stale++;
+  });
+  if(!Object.keys(tls).length){
+    document.getElementById('mgrtable').innerHTML=`<div class="nodata">No open leads match the selected filters.</div>`;
+    return;
+  }
+  let total=0, rows='';
+  Object.entries(tls).forEach(([tl,d])=>{
+    const tlc=Object.values(d.agents).reduce((s,a)=>s+a.count,0);
+    const tls2=Object.values(d.agents).reduce((s,a)=>s+a.stale,0);
+    total+=tlc;
+    rows+=`<tr class="tlrow"><td>${esc(tl)}</td><td class="vmono">${tlc}${tls2>0?`<span class="sflag" title="${tls2} stale leads"></span>`:''}</td><td class="vmono">₹${(tlc*aov).toLocaleString('en-IN')}</td><td></td></tr>`;
+    Object.entries(d.agents).forEach(([ag,a])=>{
+      rows+=`<tr class="agrow"><td>${esc(ag)}</td><td class="vmono">${a.count}${a.stale>0?`<span class="sflag"></span>`:''}</td><td class="vmono">₹${(a.count*aov).toLocaleString('en-IN')}</td><td class="vmono" style="font-size:12px;color:var(--am)">${a.stale>0?a.stale+' stale':''}</td></tr>`;
+    });
+  });
+  rows+=`<tr class="totrow"><td>Total</td><td class="vmono">${total}</td><td class="vmono">₹${(total*aov).toLocaleString('en-IN')}</td><td></td></tr>`;
+  document.getElementById('mgrtable').innerHTML=`
+    <table class="ptable">
+      <thead><tr><th>TL / Agent</th><th>Open leads</th><th>Expected pipeline</th><th>Stale</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="font-size:11px;color:var(--tx3);margin-top:8px">AOV: ₹${aov.toLocaleString('en-IN')} &nbsp;·&nbsp; <span style="display:inline-flex;align-items:center;gap:4px"><span class="sflag"></span>= 7+ days without contact</span></div>`;
+}
+function populateAgentDrop() {
+  const sel=document.getElementById('ml-agent');
+  [...new Set(leads.map(l=>l.agentName||l.agentEmail))].sort().forEach(a=>{
+    const o=document.createElement('option'); o.value=a; o.textContent=a; sel.appendChild(o);
+  });
+}
+function renderAllLeads() {
+  const af=document.getElementById('ml-agent').value;
+  const sf=document.getElementById('ml-status').value;
+  const of=document.getElementById('ml-offer').value;
+  let data=[...leads];
+  if(af!=='all') data=data.filter(l=>(l.agentName||l.agentEmail)===af);
+  if(sf!=='all') data=data.filter(l=>l.status===sf);
+  if(of!=='all') data=data.filter(l=>l.offerInterest===of);
+  data.sort((a,b)=>new Date(b.dateAdded)-new Date(a.dateAdded));
+  if(!data.length){document.getElementById('alltable').innerHTML=`<div class="nodata">No leads match selected filters.</div>`;return;}
+  const sc=s=>s==='Converted'?'color:var(--g)':s==='Not Interested'?'color:var(--r)':'color:var(--am)';
+  document.getElementById('alltable').innerHTML=`
+    <div style="overflow-x:auto">
+    <table class="ptable" style="font-size:12px;min-width:800px">
+      <thead><tr><th>Case ID</th><th>Customer</th><th>Agent</th><th>TL</th><th>Offer</th><th>Added</th><th>Last called</th><th>Status</th><th>Notes</th></tr></thead>
+      <tbody>${data.map(l=>`<tr class="agrow">
+        <td style="padding-left:14px" class="vmono">${esc(l.caseId)}</td>
+        <td style="font-weight:500">${esc(l.customerName)}</td>
+        <td style="color:var(--tx2)">${esc(l.agentName||'')}</td>
+        <td style="color:var(--tx2)">${esc(l.tlName||'')}</td>
+        <td><span class="pill po">${esc(l.offerInterest)}</span></td>
+        <td style="color:var(--tx2)">${l.dateAdded}</td>
+        <td style="color:var(--tx2)">${l.lastContacted||'—'}</td>
+        <td style="${sc(l.status)};font-weight:500">${l.status}</td>
+        <td style="color:var(--tx2);font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(l.notes||'')}">${esc(l.notes||'—')}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+}
+
+// ── TAB SWITCHING ─────────────────────────────────────────
+function atab(p,el){
+  document.querySelectorAll('#vagent .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('ap-pipeline').classList.toggle('active',p==='pipeline');
+  document.getElementById('ap-stats').classList.toggle('active',p==='stats');
+  if(p==='stats') renderStats();
+}
+function mtab(p,el){
+  document.querySelectorAll('#vmgr .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('mp-pipeline').classList.toggle('active',p==='pipeline');
+  document.getElementById('mp-leads').classList.toggle('active',p==='leads');
+}
+
+// ── API ───────────────────────────────────────────────────
+async function api(action, data={}) {
+  const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action,...data})});
+  return res.json();
+}
+
+// ── HELPERS ───────────────────────────────────────────────
+function fd(d){return d.toISOString().split('T')[0]}
+function initials(n){return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function signOut(){google.accounts.id.disableAutoSelect();location.reload()}
+let tt;
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2500)}
+</script>
+</body>
+</html>
